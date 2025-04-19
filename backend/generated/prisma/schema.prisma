@@ -1,0 +1,125 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  clerkId   String   @unique
+  email     String   @unique
+  password  String?
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+
+  // Relations
+  coursesCreated Course[]      @relation("TeacherCourses") // Courses created by this user (if teacher)
+  enrollments    Enrollment[]
+  certificates   Certificate[]
+}
+
+model Course {
+  id                 String   @id @default(uuid())
+  title              String
+  description        String
+  price              Float
+  discountPercentage Float?
+  discountedPrice    Float?
+  duration           String?
+  level              String?
+  requirements       String?
+  tags               String?
+  thumbnail          String?
+  published          Boolean  @default(false)
+  teacherId          String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  teacher      User          @relation("TeacherCourses", fields: [teacherId], references: [id])
+  enrollments  Enrollment[]
+  lessons      Lesson[]
+  quizzes      Quiz[]
+  attachments  Attachment[]
+  certificates Certificate[]
+}
+
+model Enrollment {
+  id        String  @id @default(uuid())
+  userId    String
+  courseId  String
+  progress  Int     @default(0) // Progress in percentage
+  completed Boolean @default(false)
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+
+  // Unique constraint to prevent duplicate enrollments
+  @@unique([userId, courseId])
+}
+
+model Lesson {
+  id       String @id @default(uuid())
+  title    String
+  videoUrl String // Supports YouTube & uploaded videos
+  courseId String
+
+  // Relations
+  course Course @relation(fields: [courseId], references: [id])
+  quiz   Quiz? // One-to-one relation with Quiz (Quiz references Lesson)
+}
+
+model Quiz {
+  id            String   @id @default(uuid())
+  lessonId      String   @unique // Must be unique for one-to-one relation
+  question      String
+  options       String[] // Multiple choice options
+  correctAnswer String
+
+  // Relations
+  lesson   Lesson  @relation(fields: [lessonId], references: [id])
+  Course   Course? @relation(fields: [courseId], references: [id])
+  courseId String?
+}
+
+model Attachment {
+  id       String @id @default(uuid())
+  name     String
+  fileUrl  String
+  courseId String
+
+  // Relations
+  course Course @relation(fields: [courseId], references: [id])
+}
+
+model Certificate {
+  id       String   @id @default(uuid())
+  userId   String
+  courseId String
+  issuedAt DateTime @default(now())
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  course Course @relation(fields: [courseId], references: [id])
+
+  // Unique constraint to ensure one certificate per course per user
+  @@unique([userId, courseId])
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
