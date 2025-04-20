@@ -52,7 +52,7 @@ const data = {
       icon: GraduationCap,
       items: [
         { title: "My Courses", url: "/dashboard/courses/mine"},
-        { title: "See Courses", url: "/dashboard/courses"}
+        { title: "Browse Courses", url: "/dashboard/courses"}
       ],
     },
     {
