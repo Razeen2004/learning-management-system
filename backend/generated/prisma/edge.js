@@ -196,7 +196,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\Razeen Work\\Website Work\\lms-app\\backend\\generated\\prisma",
+      "value": "/home/user/learning-management-system/backend/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -205,17 +205,16 @@ const config = {
     "binaryTargets": [
       {
         "fromEnvVar": null,
-        "value": "windows",
+        "value": "debian-openssl-1.1.x",
         "native": true
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\Razeen Work\\Website Work\\lms-app\\backend\\prisma\\schema.prisma",
+    "sourceFilePath": "/home/user/learning-management-system/backend/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": null,
-    "schemaEnvPath": "../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../../prisma",
   "clientVersion": "5.22.0",
@@ -224,7 +223,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
-  "postinstall": false,
+  "postinstall": true,
   "inlineDatasources": {
     "db": {
       "url": {
