@@ -39,13 +39,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const dotenv = __importStar(require("dotenv"));
-const client_1 = require("@prisma/client");
+const prisma_1 = require("../generated/prisma");
 dotenv.config();
+const prisma = new prisma_1.PrismaClient();
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3001;
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
-const prisma = new client_1.PrismaClient();
 app.get('/', (req, res) => {
     res.send('Hello from the backend!');
 });
