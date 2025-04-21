@@ -1,16 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, LucideIcon, Plus } from "lucide-react"
+import { LucideIcon } from "lucide-react"
 
 import {
   DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
   SidebarMenu,
@@ -32,17 +26,17 @@ export function TeamSwitcher({
 
   const { resolvedTheme } = useTheme();
   const [isMounted, setIsMounted] = React.useState(false);
+  const { isMobile } = useSidebar()
+  const [activeTeam, setActiveTeam] = React.useState(teams[0])
 
   React.useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  if (!isMounted) return null;
+
   // Dynamic icon color based on theme
   const iconColorClass = isMounted ? (resolvedTheme === 'dark' ? 'text-white' : 'text-gray-900') : 'text-gray-900';
-
-
-  const { isMobile } = useSidebar()
-  const [activeTeam, setActiveTeam] = React.useState(teams[0])
 
   if (!activeTeam) {
     return null
