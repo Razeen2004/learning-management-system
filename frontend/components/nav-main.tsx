@@ -17,6 +17,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
+import { useSession } from "next-auth/react"
 
 export function NavMain({
   items,
@@ -32,9 +33,14 @@ export function NavMain({
     }[]
   }[]
 }) {
+
+  const session = useSession ();
+
   return (
+
+
     <SidebarGroup>
-      <SidebarGroupLabel>Platform</SidebarGroupLabel>
+      <SidebarGroupLabel>{session?.data?.user?.role || 'STUDENT'}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <Collapsible

@@ -27,9 +27,11 @@ export const authOptions: NextAuthOptions = {
                     const data = await res.json();
 
                     return {
-                        id: data.user.id,
-                        email: data.user.email,
-                        role: data.user.role
+                        id: data.id,
+                        name: data.name,
+                        isVerified: data.isVerified,
+                        email: data.email,
+                        role: data.role
                     };
                 } catch (error) {
                     console.error("Error in authorize:", error);
@@ -42,14 +44,18 @@ export const authOptions: NextAuthOptions = {
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
+                token.name = user.name;
+                token.isVerified = user?.isVerified;
                 token.email = user.email;
-                token.role = user.role;
+                token.role = user?.role;
             }
             return token;
         },
         async session({ session, token }) {
             session.user = {
                 id: token.id,
+                name: token.name,
+                isVerified: token.isVerified,
                 email: token.email,
                 role: token.role
             };
@@ -62,5 +68,6 @@ export const authOptions: NextAuthOptions = {
     secret: process.env.NEXTAUTH_SECRET,
     pages: {
         signIn: "/signin",
+        signOut: '/',
     },
 };

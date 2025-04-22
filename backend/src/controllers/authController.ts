@@ -4,6 +4,7 @@ import { createUser, validateCredentials } from '../services/authService'
 import { generateToken } from '../utils/jwt'
 import { SignupSchema, LoginSchema } from '../validators/authValidators'
 import prisma from '../utils/prisma';
+import SendMail from '../utils/mail';
 
 export const signup = async (req: Request, res: Response) => {
     try {
@@ -24,23 +25,65 @@ export const signup = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
     try {
-        const { email, password } = req.body;
+        const { email, password } = LoginSchema.parse(req.body)
 
-        const user = await prisma.user.findUnique({ where: { email } });
-
-        if (!user || user.password !== password) {
-            return res.status(401).json({ message: "Invalid credentials" });
-        }
-
+        const user = await validateCredentials(email, password);
+        if (!user) return res.status(401).json({ message: 'Invalid credentials' })
+        // const token = generateToken(user.id, user.role);
         return res.json({
             id: user.id,
+            name: user.name,
             email: user.email,
+            isVerified: user.isVerified,
             role: user.role,
         });
+
     } catch (error: any) {
         return res.status(400).json({ error: error.message });
     }
 };
+
+export const SendVerifyEmailCode = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body
+        const user = await prisma.user.findUnique({ where: { email } })
+        if (!user) return res.status(404).json({ message: 'User not found' })
+
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        const updatedUser = await prisma.user.update({
+            where: { email },
+            data: { verificationToken: verificationCode }
+        })
+
+        SendMail(email, "Email Verification - Life Long Learning", `${verificationCode}`, email);
+        res.status(200).json({ message: 'Verification email sent' })
+
+    } catch (error: any) {
+        res.status(400).json({ error: error.message })
+    }
+}
+
+export const VerifyEmail = async (req: Request, res: Response) => {
+    try {
+        const { email, verificationCode } = req.body
+        const user = await prisma.user.findFirst({ where: { 
+            email,
+            verificationToken: verificationCode
+        } })
+        if (!user) return res.status(404).json({ message: 'User or Token is not Correct!' });
+        const updatedUser = await prisma.user.update({
+            where: { email },
+            data: { isVerified: true, verificationToken: null }
+        })
+        res.status(200).json({ message: 'Email verified successfully' })
+
+    } catch (error: any) {
+        res.status(400).json({ error: error.message })
+    }
+}
+
+
 
 export const protectedRoute = (req: any, res: Response) => {
     res.json({ message: 'Protected route accessed', user: req?.user })

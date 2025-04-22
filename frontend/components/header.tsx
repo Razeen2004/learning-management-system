@@ -5,10 +5,14 @@ import Link from 'next/link';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Bird, Moon, Sun } from 'lucide-react';
+import { signOut, useSession } from 'next-auth/react';
 
 export function Header() {
     const { theme, setTheme, resolvedTheme } = useTheme();
     const [isMounted, setIsMounted] = React.useState(false);
+    const session = useSession();
+
+    console.log('Session:', session); // Log the session object
 
     // Set isMounted to true after the component mounts on the client
     React.useEffect(() => {
@@ -27,7 +31,7 @@ export function Header() {
                     {/* Logo */}
                     <div className="flex-shrink-0">
                         <Link href="/" className="flex items-center gap-2">
-                            <Bird/>
+                            <Bird />
                             <span className="text-2xl font-bold text-primary">Nexlify</span>
                         </Link>
                     </div>
@@ -81,12 +85,25 @@ export function Header() {
                         </Button>
 
                         {/* Auth Buttons */}
-                        <Button variant="outline" asChild>
-                            <Link href="/signin">Login</Link>
-                        </Button>
-                        <Button asChild>
-                            <Link href="/signup">Signup</Link>
-                        </Button>
+                        {session.status === 'authenticated' ? (
+                            <>
+                                <Button variant="outline" asChild>
+                                    <Link href="/dashboard">Dashboard</Link>
+                                </Button>
+                                <Button onClick={() => signOut({ callbackUrl: '/', redirect:true })}>
+                                    Logout
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <Button variant="outline" asChild>
+                                    <Link href="/signin">Login</Link>
+                                </Button>
+                                <Button asChild>
+                                    <Link href="/signup">Signup</Link>
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

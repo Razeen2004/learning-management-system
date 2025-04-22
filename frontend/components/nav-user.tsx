@@ -5,8 +5,7 @@ import {
   Bell,
   ChevronsUpDown,
   CreditCard,
-  LogOut,
-  Sparkles,
+  LogOut
 } from "lucide-react"
 
 import {
@@ -29,18 +28,31 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { signOut } from "next-auth/react"
+import { signOut, useSession } from "next-auth/react"
+import React, { useEffect } from "react"
 
-export function NavUser({
-  user,
-}: {
-  user: {
-    name: string
-    email: string
-    avatar: string
-  }
-}) {
+export function NavUser() {
   const { isMobile } = useSidebar()
+  const session = useSession();
+  const [user, setUser] = React.useState<{ name?: string | null; email?: string | null; avatar?: string | null } | null>(null);
+  const [userName, setUserName]: any = React.useState('')
+
+  useEffect(() => {
+    if (session?.data?.user) {
+      setUser(session?.data.user || "");
+      const name = session?.data?.user.name || '';
+      const initials =
+        name
+          ? (name.split(' ')[0]?.[0]?.toUpperCase() ?? '') +
+          (name.split(' ')[1]?.[0]?.toUpperCase() ?? '')
+          : '';
+      setUserName(initials);
+    } else {
+      setUser(null);
+      setUserName('');
+    }
+  }, [session]);
+
 
   return (
     <SidebarMenu>
@@ -52,12 +64,12 @@ export function NavUser({
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                <AvatarImage src={user?.avatar ?? ''} alt={user?.name ?? ''} />
+                <AvatarFallback className="rounded-lg">{userName.toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate font-semibold">{user?.name}</span>
+                <span className="truncate text-xs">{user?.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -71,23 +83,16 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarImage src={user?.avatar ?? ""} alt={user?.name ?? ""} />
+                  <AvatarFallback className="rounded-lg">{userName.toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-semibold">{user?.name}</span>
+                  <span className="truncate text-xs">{user?.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
-            {/* <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
-            </DropdownMenuGroup>*/}
-            <DropdownMenuSeparator /> 
+            <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
@@ -103,8 +108,8 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut onClick={()=>signOut()}/>
+            <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/', redirect:true })} >
+              <LogOut />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

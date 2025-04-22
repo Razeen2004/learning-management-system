@@ -1,7 +1,7 @@
 "use client"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button";
-import { signIn, signOut } from "next-auth/react";
+import { getSession, signIn, signOut, useSession } from "next-auth/react";
 import {
     Card,
     CardContent,
@@ -24,15 +24,32 @@ export function LoginForm({
     const [email, setEmail] = React.useState("");
     const [password, setPassword] = React.useState("");
     const router = useRouter();
+    const session = useSession();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         try {
-            const result = await signIn("credentials", { email, password, redirect: false });
+            const result = await signIn("credentials", {
+                email,
+                password,
+                redirect: false
+            });
+
             if (result?.ok) {
                 toast("You're signed in!");
-                router.push("/dashboard");
+
+                // 💡 Wait for a moment (optional)
+                setTimeout(async () => {
+                    const updatedSession = await getSession();
+
+                    if (updatedSession?.user?.isVerified) {
+                        router.push("/dashboard");
+                    } else {
+                        router.push("/verify");
+                        toast("Please verify your email to continue");
+                    }
+                }, 1000);
             } else {
                 toast("Incorrect Email or Password");
             }

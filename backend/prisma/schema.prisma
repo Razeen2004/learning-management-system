@@ -8,13 +8,16 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String? // Optional for third-party logins
-  image     String? // Profile picture
-  role      Role     @default(STUDENT)
-  createdAt DateTime @default(now())
+  id                String    @id @default(uuid())
+  name              String
+  email             String    @unique
+  password          String? // Optional for third-party logins
+  image             String? // Profile picture
+  role              Role      @default(STUDENT)
+  createdAt         DateTime  @default(now())
+  isVerified        Boolean   @default(false)
+  verificationToken String?
+  tokenExpiry       DateTime?
 
   // Relations
   accounts       Account[] // Added for NextAuth
