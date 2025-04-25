@@ -1,22 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest, res: NextResponse) {
-    try {
-        const { email, password, verificationCode } = await req.json();
-        const response = await fetch(`${process.env.BACKEND_URL}/api/auth/reset-password`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password, verificationCode }),
-        });
+// Define response type
+type ResetPasswordResponse = {
+  message?: string;
+  error?: string;
+};
 
-        const data = await response.json();
-        if (response.ok) {
-            return NextResponse.json({ message: "Password reset successfully!" });
-        }
-        return NextResponse.json({ error: data?.error || "Failed to reset password" }, { status: 400 });
+export async function POST(req: NextRequest) {
+  try {
+    const { email, password, verificationCode } = await req.json();
 
-    } catch (error) {
-        console.error("Error in forgot password route:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    // Validate inputs
+    if (!email || !password || !verificationCode) {
+      return NextResponse.json<ResetPasswordResponse>(
+        { error: "Email, password, and verification code are required" },
+        { status: 400 }
+      );
     }
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, verificationCode }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      return NextResponse.json<ResetPasswordResponse>(
+        { message: "Password reset successfully!" },
+        { status: 200 }
+      );
+    }
+
+    return NextResponse.json<ResetPasswordResponse>(
+      { error: data?.error || "Failed to reset password" },
+      { status: 400 }
+    );
+  } catch (error) {
+    console.error("Error in reset password route:", error);
+    return NextResponse.json<ResetPasswordResponse>(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
 }
