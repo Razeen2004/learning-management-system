@@ -2,6 +2,16 @@
 
 import * as React from "react";
 import { useSession } from "next-auth/react";
+import { DefaultSession } from "next-auth";
+
+// Extend the DefaultSession type to include 'role'
+declare module "next-auth" {
+  interface Session {
+    user?: {
+      role?: string;
+    } & DefaultSession["user"];
+  }
+}
 import {
   Bird,
   FileText,
@@ -128,8 +138,8 @@ const getNavMainByRole = (role: string) => {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: session, status } = useSession();
-  const role = session?.user?.role || "student"; // Default to student if no role
+  const session  = useSession();
+  const role = session?.data?.user?.role || "STUDENT"; // Default to student if no role
 
   // Dynamically generate navMain based on role
   const navMain = getNavMainByRole(role);
