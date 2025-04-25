@@ -3,6 +3,8 @@ import express from 'express'
 import cors from 'cors'
 import authRoutes from './routes/authRoutes'
 import dotenv from 'dotenv';
+import './utils/ignoreSelfSignedCerts.js';
+
 
 const app = express()
 app.use(express.json());
