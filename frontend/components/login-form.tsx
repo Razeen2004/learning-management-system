@@ -2,6 +2,7 @@
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button";
 import { getSession, signIn, signOut, useSession } from "next-auth/react";
+import { Session } from "next-auth";
 import {
     Card,
     CardContent,
@@ -28,28 +29,25 @@ export function LoginForm({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
         try {
             const result = await signIn("credentials", {
                 email,
                 password,
-                redirect: false
+                redirect: false,
             });
 
             if (result?.ok) {
                 toast("You're signed in!");
 
                 // 💡 Wait for a moment (optional)
-                setTimeout(async () => {
-                    const updatedSession = await getSession();
+                const updatedSession = await getSession() as Session & { user: { isVerified?: boolean } };
 
-                    if (updatedSession?.user?.isVerified) {
-                        router.push("/dashboard");
-                    } else {
-                        router.push("/verify");
-                        toast("Please verify your email to continue");
-                    }
-                }, 1000);
+                if (updatedSession?.user && updatedSession.user.isVerified) {
+                    router.push("/dashboard");
+                } else {
+                    router.push("/verify");
+                    toast("Please verify your email to continue");
+                }
             } else {
                 toast("Incorrect Email or Password");
             }
