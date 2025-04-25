@@ -1,6 +1,16 @@
-import { NextAuthOptions } from "next-auth";
+import { Session } from "next-auth";
+import { NextAuthOptions, User } from "next-auth";
+import { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+
+declare module "next-auth" {
+    interface User {
+        id: string;
+        role?: string;
+        isVerified?: string;
+    }
+}
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -89,14 +99,14 @@ export const authOptions: NextAuthOptions = {
             }
             return token;
         },
-        async session({ session, token }) {
+        async session({ session, token }: { session: Session; token: JWT }) {
             session.user = {
-                id: token.id,
+                id: token.id as string | undefined,
                 name: token.name,
-                isVerified: token.isVerified,
+                isVerified: token.isVerified as string | undefined,
                 email: token.email,
-                role: token.role,
-                image: token.image,
+                role: token.role as string | undefined,
+                image: token.image as string | undefined,
             };
             return session;
         }
