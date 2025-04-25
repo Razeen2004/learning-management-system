@@ -1,32 +1,39 @@
 services:
-  postgres:
-    image: postgres
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: dbname
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    environment:
+      POSTGRES_PRISMA_URL: ${POSTGRES_PRISMA_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: ${PORT}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
     ports:
       - "5000:5000"
-    env_file:
-      - ./backend/.env
-    depends_on:
-      - postgres
+    networks:
+      - app-network
 
   frontend:
-    build: ./frontend
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    environment:
+      BACKEND_URL: ${BACKEND_URL}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      POSTGRES_PRISMA_URL: ${POSTGRES_PRISMA_URL}
     ports:
       - "3000:3000"
-    env_file:
-      - ./frontend/.env
     depends_on:
       - backend
+    networks:
+      - app-network
 
-volumes:
-  pgdata:
+networks:
+  app-network:
+    driver: bridge
