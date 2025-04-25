@@ -7,6 +7,7 @@ export const createUser = async (userData: {
   email: string
   password: string
   role?: any
+  image?: string | null
 }) => {
   const hashedPassword = await bcrypt.hash(userData.password, 12)
 
@@ -14,7 +15,8 @@ export const createUser = async (userData: {
     data: {
       ...userData,
       password: hashedPassword,
-      role: userData.role || 'STUDENT'
+      role: userData.role || 'STUDENT',
+      image: userData.image || null,
     },
     select: {
       id: true,

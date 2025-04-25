@@ -36,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.protectedRoute = exports.RecoverPassword = exports.SendRecoveryPhrase = exports.VerifyEmail = exports.SendVerifyEmailCode = exports.login = exports.signup = void 0;
+exports.protectedRoute = exports.RecoverPassword = exports.SendRecoveryPhrase = exports.VerifyEmail = exports.SendVerifyEmailCode = exports.loginWithGoogle = exports.login = exports.signup = void 0;
 const authService_1 = require("../services/authService");
 const jwt_1 = require("../utils/jwt");
 const authValidators_1 = require("../validators/authValidators");
@@ -49,7 +49,7 @@ const signup = async (req, res) => {
         const existingUser = await prisma_1.default.user.findUnique({ where: { email } });
         if (existingUser)
             return res.status(400).json({ message: 'User already exists' });
-        const user = await (0, authService_1.createUser)({ name, email, password, role });
+        const user = await (0, authService_1.createUser)({ name, email, password, role, image: null });
         const token = (0, jwt_1.generateToken)(user.id, user.role);
         res.status(201).json({ user, token });
     }
@@ -79,6 +79,38 @@ const login = async (req, res) => {
     }
 };
 exports.login = login;
+const loginWithGoogle = async (req, res) => {
+    try {
+        const { email, name, image } = req.body;
+        // Check if user exists
+        let user = await prisma_1.default.user.findUnique({ where: { email } });
+        if (user?.image == null) {
+            // Update the user with the image URL if it is null
+            const updatedImageUser = await prisma_1.default.user.update({
+                where: { email },
+                data: { image }
+            });
+        }
+        if (!user) {
+            // If user doesn't exist, create the user
+            const newUser = await (0, authService_1.createUser)({ name, email, password: "", role: "STUDENT", image });
+            return res.status(201).json({
+                message: "User created successfully",
+                user: newUser, // Send the created user object back
+            });
+        }
+        // If user exists, return user object
+        return res.status(200).json({
+            message: "User already exists",
+            user, // Send the existing user object back
+        });
+    }
+    catch (error) {
+        console.error("Error in Google login handler:", error);
+        return res.status(500).json({ error: error.message || "Internal Server Error" });
+    }
+};
+exports.loginWithGoogle = loginWithGoogle;
 // Send the Verification token to the email, after getting their email....
 const SendVerifyEmailCode = async (req, res) => {
     try {
@@ -87,9 +119,13 @@ const SendVerifyEmailCode = async (req, res) => {
         if (!user)
             return res.status(404).json({ message: 'User not found' });
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const tokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
         const updatedUser = await prisma_1.default.user.update({
             where: { email },
-            data: { verificationToken: verificationCode }
+            data: {
+                verificationToken: verificationCode,
+                tokenExpiry: tokenExpiry
+            }
         });
         (0, mail_1.default)(email, "Email Verification - Life Long Learning", `${verificationCode}`, email);
         res.status(200).json({ message: 'Verification email sent' });
@@ -103,26 +139,45 @@ exports.SendVerifyEmailCode = SendVerifyEmailCode;
 const VerifyEmail = async (req, res) => {
     try {
         const { email, verificationCode } = req.body;
-        const user = await prisma_1.default.user.findFirst({
-            where: {
-                email,
-                verificationToken: verificationCode
+        const user = await prisma_1.default.user.findUnique({
+            where: { email }
+        });
+        if (!user || !user.verificationToken || !user.tokenExpiry) {
+            return res.status(404).json({ message: 'User or Token is not correct!' });
+        }
+        const now = new Date();
+        // Check if token expired
+        if (now > user.tokenExpiry) {
+            await prisma_1.default.user.update({
+                where: { email },
+                data: {
+                    verificationToken: null,
+                    tokenExpiry: null
+                }
+            });
+            return res.status(400).json({ message: 'Token expired' });
+        }
+        // Check if token is correct
+        if (user.verificationToken !== verificationCode) {
+            return res.status(400).json({ message: 'Verification code is not correct!' });
+        }
+        // Token valid, update user
+        await prisma_1.default.user.update({
+            where: { email },
+            data: {
+                isVerified: true,
+                verificationToken: null,
+                tokenExpiry: null
             }
         });
-        if (!user)
-            return res.status(404).json({ message: 'User or Token is not Correct!' });
-        const updatedUser = await prisma_1.default.user.update({
-            where: { email },
-            data: { isVerified: true, verificationToken: null }
-        });
-        res.status(200).json({ message: 'Email verified successfully' });
+        return res.status(200).json({ message: 'Email verified successfully' });
     }
     catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 exports.VerifyEmail = VerifyEmail;
-// Send the recovery phase to the email, after getting their email....
+// Send the recovery phase to the email, for forgotting password....
 const SendRecoveryPhrase = async (req, res) => {
     try {
         const { email } = req.body;
@@ -130,9 +185,10 @@ const SendRecoveryPhrase = async (req, res) => {
         if (!user)
             return res.status(404).json({ message: 'User not found' });
         const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const tokenExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
         const updatedUser = await prisma_1.default.user.update({
             where: { email },
-            data: { verificationToken: verificationCode }
+            data: { verificationToken: verificationCode, tokenExpiry }
         });
         (0, mail_1.SendRecoveryMail)(email, "Password Recovery - Life Long Learning", verificationCode, email);
         res.status(200).json({ message: 'Recovery email sent' });
@@ -147,23 +203,40 @@ const RecoverPassword = async (req, res) => {
     try {
         const { email, password, verificationCode } = req.body;
         const user = await prisma_1.default.user.findUnique({
-            where: {
-                email
+            where: { email }
+        });
+        if (!user || !user.verificationToken || !user.tokenExpiry) {
+            return res.status(404).json({ message: 'User or Token is not correct!' });
+        }
+        const now = new Date();
+        if (now > user.tokenExpiry) {
+            await prisma_1.default.user.update({
+                where: { email },
+                data: {
+                    verificationToken: null,
+                    tokenExpiry: null
+                }
+            });
+            return res.status(400).json({ message: 'Token expired' });
+        }
+        // Check if token is correct
+        if (user.verificationToken !== verificationCode) {
+            return res.status(400).json({ message: 'Verification code is not correct!' });
+        }
+        const hashedPassword = await (0, authService_1.createNewPassword)(password);
+        // Token valid, update user
+        await prisma_1.default.user.update({
+            where: { email },
+            data: {
+                password: hashedPassword,
+                verificationToken: null,
+                tokenExpiry: null
             }
         });
-        if (!user)
-            return res.status(404).json({ message: 'User not found' });
-        if (user.verificationToken !== verificationCode)
-            return res.status(404).json({ message: 'Verification code is not correct!' });
-        const hashedPassword = await (0, authService_1.createNewPassword)(password);
-        const updatedUser = await prisma_1.default.user.update({
-            where: { email },
-            data: { password: hashedPassword, verificationToken: null }
-        });
-        res.status(200).json({ message: 'Password updated successfully' });
+        return res.status(200).json({ message: 'Password changed successfully' });
     }
     catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 exports.RecoverPassword = RecoverPassword;

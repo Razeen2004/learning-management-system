@@ -89,7 +89,7 @@ export function LoginForm({
                                 <div className="flex items-center">
                                     <Label htmlFor="password">Password</Label>
                                     <a
-                                        href="#"
+                                        href="/forgot-password"
                                         className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                                     >
                                         Forgot your password?
@@ -99,6 +99,9 @@ export function LoginForm({
                             </div>
                             <Button type="submit" className="w-full">
                                 Login
+                            </Button>
+                            <Button variant="outline" className="w-full" onClick={() => signIn("google")}>
+                                Login with Google
                             </Button>
 
 

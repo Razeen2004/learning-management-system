@@ -27,12 +27,15 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useState } from "react";
 import { toast } from "sonner"; // Assuming you have a toast component for notifications
+import axios from "axios";
+import { useSession } from "next-auth/react";
 
 const ForgotPassword = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [otp, setOtp] = useState("");
   const [email, setEmail] = useState("");
+  const [boxEmail, setBoxEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [error, setError] = useState("");
@@ -41,71 +44,36 @@ const ForgotPassword = () => {
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSending(true);
-    setError("");
 
     try {
-      // Replace with your actual API call
-      const response = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to send verification email");
-      }
-
-      toast({
-        title: "Email Sent",
-        description: "A verification code has been sent to your email.",
-      });
-      setIsDialogOpen(false); // Close the dialog
-    } catch (err) {
-      setError(err.message || "Something went wrong");
-      toast({
-        title: "Error",
-        description: err.message || "Failed to send verification email",
-        variant: "destructive",
-      });
+      const res = await axios.post("/api/auth/forgot-password", { email });
+      toast("Verification code sent successfully!");
+      setIsDialogOpen(false);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error);
     } finally {
       setIsSending(false);
     }
+    setIsSending(false);
   };
 
   // Handle form submission for OTP and password reset
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError("");
 
     try {
-      // Replace with your actual API call
-      const response = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, token: otp, newPassword: password }),
+      const res = await axios.post("/api/auth/forgot-password/verify", {
+        email: boxEmail,
+        password: password,
+        verificationCode: otp,
       });
-
-      if (!response.ok) {
-        throw new Error("Invalid verification code or email");
-      }
-
-      toast({
-        title: "Success",
-        description: "Your password has been reset successfully.",
-      });
-      // Optionally redirect to login
-      window.location.href = "/signin";
-    } catch (err) {
-      setError(err.message || "Something went wrong");
-      toast({
-        title: "Error",
-        description: err.message || "Failed to reset password",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+      toast("Password reset successfully!");
+    } catch (error: any) {
+      console.log(error);
+      toast.error(error?.response?.data?.error);
     }
+    setIsSubmitting(false);
   };
 
   return (
@@ -118,7 +86,7 @@ const ForgotPassword = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6 mb-4">
             <div className="grid gap-4">
               {/* OTP Input */}
               <div className="flex justify-center gap-2">
@@ -135,6 +103,17 @@ const ForgotPassword = () => {
                     <InputOTPSlot index={5} />
                   </InputOTPGroup>
                 </InputOTP>
+              </div>
+              <div className="grid gap-4">
+                <Label htmlFor="email2">Enter your Email</Label>
+                <Input
+                  id="email2"
+                  type="text"
+                  value={boxEmail}
+                  onChange={(e) => setBoxEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                />
               </div>
               {/* Password Input */}
               <div className="grid gap-4">
@@ -153,46 +132,46 @@ const ForgotPassword = () => {
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? "Verifying..." : "Reset Password"}
             </Button>
-            {/* Dialog Trigger for Email Input */}
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full">
-                  {isSending ? "Sending..." : "Send Verification Code"}
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Enter Your Email</DialogTitle>
-                  <DialogDescription>
-                    We'll send a verification code to this email address.
-                  </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSend} className="grid gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="your.email@example.com"
-                      required
-                    />
-                  </div>
-                  {error && <p className="text-sm text-red-500">{error}</p>}
-                  <Button type="submit" disabled={isSending}>
-                    {isSending ? "Sending..." : "Send Email"}
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-            <div className="mt-4 text-center text-sm">
-              Back to{" "}
-              <a href="/signin" className="underline underline-offset-4">
-                Login
-              </a>
-            </div>
           </form>
+          {/* Dialog Trigger for Email Input */}
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full">
+                {isSending ? "Sending..." : "Send Verification Code"}
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Enter Your Email</DialogTitle>
+                <DialogDescription>
+                  We'll send a verification code to this email address.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSend} className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your.email@example.com"
+                    required
+                  />
+                </div>
+                {error && <p className="text-sm text-red-500">{error}</p>}
+                <Button type="submit" disabled={isSending}>
+                  {isSending ? "Sending..." : "Send Email"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+          <div className="mt-4 text-center text-sm">
+            Back to{" "}
+            <a href="/signin" className="underline underline-offset-4">
+              Login
+            </a>
+          </div>
         </CardContent>
       </Card>
     </div>

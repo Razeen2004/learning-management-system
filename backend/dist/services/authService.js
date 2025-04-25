@@ -13,7 +13,8 @@ const createUser = async (userData) => {
         data: {
             ...userData,
             password: hashedPassword,
-            role: userData.role || 'STUDENT'
+            role: userData.role || 'STUDENT',
+            image: userData.image || null,
         },
         select: {
             id: true,
