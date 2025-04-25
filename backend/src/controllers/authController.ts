@@ -1,11 +1,12 @@
 // src/controllers/authController.ts
 import { Request, Response } from 'express'
-import { createUser, validateCredentials } from '../services/authService'
+import { createNewPassword, createUser, validateCredentials } from '../services/authService'
 import { generateToken } from '../utils/jwt'
 import { SignupSchema, LoginSchema } from '../validators/authValidators'
 import prisma from '../utils/prisma';
-import SendMail from '../utils/mail';
+import SendMail, { SendRecoveryMail } from '../utils/mail';
 
+// Signup the user, with the given name, email and password....
 export const signup = async (req: Request, res: Response) => {
     try {
         const { name, email, password, role } = SignupSchema.parse(req.body)
@@ -23,6 +24,7 @@ export const signup = async (req: Request, res: Response) => {
     }
 }
 
+// Login the user, with the given email and password....
 export const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = LoginSchema.parse(req.body)
@@ -43,6 +45,7 @@ export const login = async (req: Request, res: Response) => {
     }
 };
 
+// Send the Verification token to the email, after getting their email....
 export const SendVerifyEmailCode = async (req: Request, res: Response) => {
     try {
         const { email } = req.body
@@ -64,13 +67,16 @@ export const SendVerifyEmailCode = async (req: Request, res: Response) => {
     }
 }
 
+// Verify the email, with the given password token from email....
 export const VerifyEmail = async (req: Request, res: Response) => {
     try {
         const { email, verificationCode } = req.body
-        const user = await prisma.user.findFirst({ where: { 
-            email,
-            verificationToken: verificationCode
-        } })
+        const user = await prisma.user.findFirst({
+            where: {
+                email,
+                verificationToken: verificationCode
+            }
+        })
         if (!user) return res.status(404).json({ message: 'User or Token is not Correct!' });
         const updatedUser = await prisma.user.update({
             where: { email },
@@ -83,6 +89,55 @@ export const VerifyEmail = async (req: Request, res: Response) => {
     }
 }
 
+// Send the recovery phase to the email, after getting their email....
+export const SendRecoveryPhrase = async (req: Request, res: Response) => {
+    try {
+
+        const { email } = req.body;
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const updatedUser = await prisma.user.update({
+            where: { email },
+            data: { verificationToken: verificationCode }
+        });
+
+        SendRecoveryMail(email, "Password Recovery - Life Long Learning", verificationCode, email);
+        res.status(200).json({ message: 'Recovery email sent' })
+
+    } catch (error: any) {
+        res.status(400).json({ error: error.message })
+    }
+}
+
+// Recover the password, by the email verification and new password....
+export const RecoverPassword = async (req: Request, res: Response) => {
+    try {
+        const { email, password, verificationCode } = req.body;
+
+        const user = await prisma.user.findUnique({
+            where: {
+                email
+            }
+        });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        if (user.verificationToken !== verificationCode) return res.status(404).json({ message: 'Verification code is not correct!' });
+
+        const hashedPassword = await createNewPassword(password);
+
+        const updatedUser = await prisma.user.update({
+            where: { email },
+            data: { password: hashedPassword, verificationToken: null }
+        })
+        res.status(200).json({ message: 'Password updated successfully' })
+
+    }
+    catch (error: any) {
+        res.status(400).json({ error: error.message })
+    }
+}
 
 
 export const protectedRoute = (req: any, res: Response) => {
