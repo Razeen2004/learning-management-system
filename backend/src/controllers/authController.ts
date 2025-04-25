@@ -8,6 +8,7 @@ import SendMail, { SendRecoveryMail } from '../utils/mail';
 
 // Signup the user, with the given name, email and password....
 export const signup = async (req: Request, res: Response) => {
+    console.log("request hit");
     try {
         const { name, email, password, role } = SignupSchema.parse(req.body)
 
