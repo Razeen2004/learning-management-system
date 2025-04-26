@@ -1,8 +1,4 @@
-import https from 'https';
-
-const agent = new https.Agent({
-  rejectUnauthorized: false,
-});
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 import { NextRequest, NextResponse } from "next/server";
 
