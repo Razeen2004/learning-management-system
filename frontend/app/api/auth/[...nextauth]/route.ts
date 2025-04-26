@@ -1,5 +1,5 @@
 // pages/api/auth/[...nextauth].ts
-import '@/lib/ignoreSelfSignedCert';
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 import NextAuth from "next-auth";
 import { authOptions } from "@/lib/auth";

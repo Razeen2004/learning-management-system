@@ -1,3 +1,5 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 import { Session } from "next-auth";
 import { NextAuthOptions, User } from "next-auth";
 import { JWT } from "next-auth/jwt";
