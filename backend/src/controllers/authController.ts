@@ -159,6 +159,7 @@ export const VerifyEmail = async (req: Request, res: Response) => {
 
 // Send the recovery phase to the email, for forgotting password....
 export const SendRecoveryPhrase = async (req: Request, res: Response) => {
+    console.log("API HIT")
     try {
 
         const { email } = req.body;
