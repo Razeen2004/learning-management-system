@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export function Banner() {
   return (
@@ -27,11 +28,13 @@ export function Banner() {
             </div>
           </div>
           {/* Image Placeholder */}
-          <div className="hidden md:block">
-            <div className="bg-primary/20 rounded-lg h-64 w-full flex items-center justify-center">
-              <span className="text-muted-foreground">Course Image Placeholder</span>
-            </div>
-          </div>
+          <Image
+            src="/doc.png" // your image path
+            alt="Banner Image"
+            width={500}
+            height={500}
+            className="transition-all dark:invert"
+          />
         </div>
       </div>
     </section>

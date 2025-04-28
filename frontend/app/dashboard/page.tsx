@@ -16,17 +16,22 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { useTheme } from "next-themes"
-import React from "react"
-
+import { useEffect, useState } from "react"
+import { signIn, useSession } from "next-auth/react"
 
 export default function StudentOverviewPage() {
+  const { data: session, status } = useSession();
+
   const { resolvedTheme } = useTheme();
-  const [isMounted, setIsMounted] = React.useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Prevent hydration mismatch
-  React.useEffect(() => {
+  useEffect(() => {
     setIsMounted(true);
-  }, []);
+    if (status === "unauthenticated") {
+      signIn(); // Redirects to login
+    }
+  }, [status]);
 
   // Mock student analytics data
   const analytics = {

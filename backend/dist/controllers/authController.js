@@ -44,6 +44,7 @@ const prisma_1 = __importDefault(require("../utils/prisma"));
 const mail_1 = __importStar(require("../utils/mail"));
 // Signup the user, with the given name, email and password....
 const signup = async (req, res) => {
+    console.log("request hit");
     try {
         const { name, email, password, role } = authValidators_1.SignupSchema.parse(req.body);
         const existingUser = await prisma_1.default.user.findUnique({ where: { email } });
@@ -179,6 +180,7 @@ const VerifyEmail = async (req, res) => {
 exports.VerifyEmail = VerifyEmail;
 // Send the recovery phase to the email, for forgotting password....
 const SendRecoveryPhrase = async (req, res) => {
+    console.log("API HIT");
     try {
         const { email } = req.body;
         const user = await prisma_1.default.user.findUnique({ where: { email } });
