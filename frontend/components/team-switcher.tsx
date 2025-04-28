@@ -39,7 +39,7 @@ export function TeamSwitcher() {
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight">
               <span className="truncate font-semibold">
-                {"Long Learning"}
+                {"Nexlify"}
               </span>
               <span className="truncate text-xs">{"Amplify Your Learning Journey"}</span>
             </div>
