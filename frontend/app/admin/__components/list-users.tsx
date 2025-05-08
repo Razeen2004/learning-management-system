@@ -78,7 +78,7 @@ export function UserTable({ user, users, loading }: UserTableProps) {
     const [rowSelection, setRowSelection] = React.useState({});
     const [openEditDialog, setOpenEditDialog] = React.useState(false);
     const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
-    const [selectedRole, setSelectedRole] = React.useState(selectedUser?.role);
+    const [selectedRole, setSelectedRole] = React.useState<any>(selectedUser?.role);
 
     const  handleSaveRole = async () => {
         const res = await axios.post("/api/admin/users/changerole", {
