@@ -21,6 +21,7 @@ import {
   Home,
   Settings2,
   Users,
+  UsersRound,
 } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavProjects } from "@/components/nav-projects";
@@ -48,16 +49,16 @@ const baseNavData = {
 // Role-based navigation items
 const getNavMainByRole = (role: string) => {
   const navMain = [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: Home,
-      items: [{ title: "Overview", url: "/dashboard" }],
-    },
   ];
 
   if (role === "STUDENT") {
     navMain.push(
+      {
+        title: "Dashboard",
+        url: "/dashboard",
+        icon: Home,
+        items: [{ title: "Overview", url: "/dashboard" }],
+      },
       {
         title: "Courses",
         url: "/dashboard/courses",
@@ -78,12 +79,24 @@ const getNavMainByRole = (role: string) => {
         url: "/dashboard/community",
         icon: Users,
         items: [{ title: "See Community", url: "/dashboard/community" }],
+      },
+      {
+        title: "Upgrade",
+        url: "/dashboard/apply-as-teacher",
+        icon: UsersRound,
+        items: [{ title: "Apply as Teacher", url: "/dashboard/apply-as-teacher" }],
       }
     );
   }
 
   if (role === "TEACHER") {
     navMain.push(
+      {
+        title: "Dashboard",
+        url: "/dashboard",
+        icon: Home,
+        items: [{ title: "Overview", url: "/dashboard" }],
+      },
       {
         title: "Courses",
         url: "/dashboard/courses",
@@ -105,12 +118,19 @@ const getNavMainByRole = (role: string) => {
   if (role === "ADMIN") {
     navMain.push(
       {
+        title: "Dashboard",
+        url: "/dashboard",
+        icon: Home,
+        items: [{ title: "Overview", url: "/admin" }],
+      },
+      {
         title: "Users",
         url: "/dashboard/",
         icon: Users,
         items: [
-          { title: "Manage Users", url: "/dashboard/admin/users" },
-          { title: "Teacher Requests", url: "/dashboard/admin/teachers" },
+          { title: "Manage Users", url: "/admin/users" },
+          { title: "Teachers", url: "/admin/teachers" },
+          { title: "Teacher Requests", url: "/admin/teachers/requests" },
         ],
       },
       {
@@ -118,8 +138,8 @@ const getNavMainByRole = (role: string) => {
         url: "/dashboard/courses",
         icon: GraduationCap,
         items: [
-          { title: "All Courses", url: "/dashboard/courses" },
-          { title: "Approve Courses", url: "/dashboard/courses/approve" },
+          { title: "All Courses", url: "/admin/courses" },
+          { title: "Approve Courses", url: "/admin/courses/approve" },
         ],
       }
     );

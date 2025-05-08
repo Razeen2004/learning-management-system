@@ -40,6 +40,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
           <div className='flex items-center gap-2 px-4'>
             <ThemeChanger />
+            {/* <Button className='bg-background h-8 w-8 rounded-lg' variant="ghost" size="icon">
+              <Avatar className=''>
+                <AvatarImage src="" alt='username' />
+                <AvatarFallback className="rounded-lg flex items-center justify-center">CN</AvatarFallback>
+              </Avatar>
+            </Button> */}
           </div>
         </header>
         {/* <div className="flex flex-1 flex-col gap-4 p-4 pt-0">

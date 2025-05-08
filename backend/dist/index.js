@@ -7,6 +7,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const authRoutes_1 = __importDefault(require("./routes/authRoutes"));
+const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
+const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
 const dotenv_1 = __importDefault(require("dotenv"));
 require("./utils/ignoreSelfSignedCerts.js");
 const app = (0, express_1.default)();
@@ -20,6 +22,8 @@ dotenv_1.default.config();
 const port = Number(process.env.PORT) || 5000;
 // Routes
 app.use('/api/auth', authRoutes_1.default);
+app.use('/api/user', userRoutes_1.default);
+app.use('/api/admin', adminRoutes_1.default);
 app.listen(port, '0.0.0.0', () => {
     console.log(`Server running on port ${port}`);
 });

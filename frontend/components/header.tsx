@@ -88,7 +88,11 @@ export function Header() {
                         {session.status === 'authenticated' ? (
                             <>
                                 <Button variant="outline" asChild>
-                                    <Link href="/dashboard">Dashboard</Link>
+                                    {session?.data?.user?.role === 'ADMIN' ? (
+                                        <Link href="/admin">Dashboard</Link>
+                                    ): (
+                                        <Link href="/dashboard">Dashboard</Link>
+                                    )}
                                 </Button>
                                 <Button onClick={() => signOut({ callbackUrl: '/', redirect:true })}>
                                     Logout

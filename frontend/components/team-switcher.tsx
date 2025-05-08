@@ -43,7 +43,6 @@ export function TeamSwitcher() {
               </span>
               <span className="truncate text-xs">{"Amplify Your Learning Journey"}</span>
             </div>
-            {/* <ChevronsUpDown className="ml-auto" /> */}
           </SidebarMenuButton>
         </DropdownMenu>
       </SidebarMenuItem>
