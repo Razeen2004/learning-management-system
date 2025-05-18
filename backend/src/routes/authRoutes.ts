@@ -1,7 +1,7 @@
 // src/routes/authRoutes.ts
 import { Router } from 'express'
 import { signup, login, protectedRoute, SendVerifyEmailCode, VerifyEmail, RecoverPassword, SendRecoveryPhrase, loginWithGoogle } from '../controllers/authController'
-import { authMiddleware } from '../middleware/authMiddleware'
+import {  authMiddleware } from '../middleware/authMiddleware'
 
 const router = Router()
 

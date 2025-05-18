@@ -71,3 +71,34 @@ export const changeUserRole = async (req: Request, res: Response) => {
     return res.status(500).json({ error: error.message });
   }
 };
+
+
+export const deleteUser = async (req: Request, res: Response) => {
+    try{
+        const admin = req.body.user; // Make sure this is added by secure auth middleware
+        const { id } = req.body;
+
+        // Only allow admins to delete users
+        if (admin.role !== "ADMIN") {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+
+        // Check if user exists
+        const user = await prisma.user.findUnique({
+            where: { id },
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Delete user
+        await prisma.user.delete({
+            where: { id },
+        });
+
+        return res.status(200).json({ message: "User deleted successfully" });
+    }catch(error : any){
+        res.status(400).json({ error: error.message });
+    }
+}

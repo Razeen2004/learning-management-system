@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
 import {
   Card,
@@ -15,10 +15,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
+import { UploadButton } from "@/utils/uploadthing";
+import { toast } from "sonner";
+import { Router } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function TeacherRequestForm() {
   const { resolvedTheme } = useTheme();
   const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
@@ -36,8 +41,8 @@ export default function TeacherRequestForm() {
     experience: "",
     jobTitle: "",
     linkedin: "",
-    resume: null as File | null,
-    certifications: null as File | null,
+    resume: "",
+    certifications: "",
     agree: false,
     confirm: false,
   });
@@ -49,17 +54,10 @@ export default function TeacherRequestForm() {
     setForm({ ...form, [name]: value });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, files } = e.target;
-    if (files && files[0]) {
-      setForm({ ...form, [name]: files[0] });
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.agree || !form.confirm) {
-      alert("Please agree to the terms and confirm.");
+      toast("Please agree to Terms & Coditions and confirm your information.");
       return;
     }
     setSubmitting(true);
@@ -74,9 +72,10 @@ export default function TeacherRequestForm() {
         method: "POST",
         body: formData,
       });
-      alert("Your request has been submitted!");
+      toast("Application submitted successfully!");
+      router.push("/dashboard");
     } catch (error) {
-      alert("An error occurred. Please try again.");
+      toast.error("Failed to submit application. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -204,22 +203,28 @@ export default function TeacherRequestForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-foreground">Upload Resume / CV</Label>
-                <Input
-                  name="resume"
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleFileChange}
-                  className="text-foreground"
+                <UploadButton className="bg-card gap-2 rounded-xl border py-4 text-black dark:text-foreground uploadthing-btn"
+                  endpoint="imageUploader"
+                  onClientUploadComplete={(res) => {
+                    setForm({ ...form, resume: res?.[0]?.ufsUrl });
+                    toast("Resume uploaded successfully!");
+                  }}
+                  onUploadError={(error: Error) => {
+                    toast.error("Error uploading resume");
+                  }}
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-foreground">Upload Certifications</Label>
-                <Input
-                  name="certifications"
-                  type="file"
-                  accept=".pdf,.doc,.docx,.jpg,.png"
-                  onChange={handleFileChange}
-                  className="text-foreground"
+                <Label className="text-sm font-medium text-foreground">Upload Certification</Label>
+                <UploadButton className="bg-card gap-2 rounded-xl border py-4 text-black dark:text-foreground uploadthing-btn"
+                  endpoint="imageUploader"
+                  onClientUploadComplete={(res) => {
+                    setForm({ ...form, certifications: res?.[0]?.ufsUrl });
+                    toast("Certification uploaded successfully!");
+                  }}
+                  onUploadError={(error: Error) => {
+                    toast.error("Error uploading certification");
+                  }}
                 />
               </div>
             </div>

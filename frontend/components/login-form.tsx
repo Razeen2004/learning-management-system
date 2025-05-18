@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import React from "react";
+import React, { useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -25,10 +25,25 @@ export function LoginForm({
     const [email, setEmail] = React.useState("");
     const [password, setPassword] = React.useState("");
     const router = useRouter();
-    const session = useSession();
+    const { data: session, status } = useSession();
+    const [loading, setLoading] = React.useState(false);
+
+    useEffect(() => {
+        console.log("Session status:", status);
+        console.log("Session data:", session);
+
+        if (status === "loading") return; // Wait until session is ready
+
+        if (session?.user?.role === "ADMIN") {
+            router.push("/admin");
+        } else if (session?.user?.isVerified) {
+            router.push("/dashboard");
+        }
+    }, [session, status]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setLoading(true); // Start loading
         try {
             const result = await signIn("credentials", {
                 email,
@@ -39,10 +54,11 @@ export function LoginForm({
             if (result?.ok) {
                 toast("You're signed in!");
 
-                // 💡 Wait for a moment (optional)
                 const updatedSession = await getSession() as Session & { user: { isVerified?: boolean } };
 
-                if (updatedSession?.user && updatedSession.user.isVerified) {
+                if (updatedSession?.user?.role === "ADMIN") {
+                    router.push("/admin");
+                } else if (updatedSession?.user?.isVerified) {
                     router.push("/dashboard");
                 } else {
                     router.push("/verify");
@@ -51,10 +67,11 @@ export function LoginForm({
             } else {
                 toast("Incorrect Email or Password");
             }
-
         } catch (error) {
             console.error("Login error:", error);
-            alert("An error occurred during login");
+            toast("An error occurred during login");
+        } finally {
+            setLoading(false); // Stop loading
         }
     };
 
@@ -95,8 +112,8 @@ export function LoginForm({
                                 </div>
                                 <Input id="password" type="password" required onChange={(e) => { setPassword(e.target.value) }} value={password} />
                             </div>
-                            <Button type="submit" className="w-full">
-                                Login
+                            <Button type="submit" className="w-full" disabled={loading}>
+                                {loading ? "Logging in..." : "Login"}
                             </Button>
                             <Button variant="outline" className="w-full" onClick={() => signIn("google")}>
                                 Login with Google
