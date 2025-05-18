@@ -19,14 +19,22 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   )
 }
 
-function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
+function TableHeader({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
       className={cn("[&_tr]:border-b", className)}
       {...props}
-    />
-  )
+    >
+      {React.Children.toArray(children).filter(
+        (child) => !(typeof child === "string" && child.trim() === "")
+      )}
+    </thead>
+  );
 }
 
 function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {

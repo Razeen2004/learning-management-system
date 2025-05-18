@@ -8,9 +8,18 @@ import GoogleProvider from "next-auth/providers/google";
 
 declare module "next-auth" {
     interface User {
+        accessToken?: string;
         id: string;
         role?: string;
         isVerified?: string;
+        name?: string | null;
+        email?: string | null;
+        image?: string | null;
+    }
+    interface Session {
+        user?: User & {
+            accessToken?: string;
+        };
     }
 }
 
@@ -40,11 +49,13 @@ export const authOptions: NextAuthOptions = {
                     const data = await res.json();
 
                     return {
+                        accessToken: data.token,
                         id: data.id,
                         name: data.name,
                         isVerified: data.isVerified,
                         email: data.email,
-                        role: data.role
+                        role: data.role,
+                        image: data?.image,
                     };
                 } catch (error) {
                     console.error("Error in authorize:", error);
@@ -72,16 +83,22 @@ export const authOptions: NextAuthOptions = {
                     });
 
                     const data = await res.json();
+                    console.log("Google login response:", data);
 
                     if (!res.ok) {
                         console.error("Error from backend:", data.error || "Unknown error");
                         return false; // Stop login if backend rejects
                     }
+                    
+                    const u = data.user;
 
-                    // Attach the user data to the JWT token
-                    user.id = data.user.id;
-                    user.role = data.user.role;
-                    user.isVerified = data.user.isVerified;
+                    user.id = u.id;
+                    user.name = u.name;
+                    user.isVerified = u.isVerified;
+                    user.email = u.email;
+                    user.role = u.role;
+                    user.image = u.image;
+                    user.accessToken = u.token;
 
                 } catch (err) {
                     console.error("Error syncing Google user:", err);
@@ -92,18 +109,21 @@ export const authOptions: NextAuthOptions = {
         },
         async jwt({ token, user }) {
             if (user) {
-                token.id = user.id;
-                token.name = user.name;
+                token.id = user?.id;
+                token.name = user?.name;
                 token.isVerified = user?.isVerified;
-                token.email = user.email;
+                token.email = user?.email;
                 token.role = user?.role;
                 token.image = user?.image;
+                token.accessToken = user?.accessToken;
+
             }
-            return token;
+            return { ...token, ...user };
         },
         async session({ session, token }: { session: Session; token: JWT }) {
             session.user = {
-                id: token.id as string | undefined,
+                accessToken: token.accessToken as string,
+                id: token.id as string,
                 name: token.name,
                 isVerified: token.isVerified as string | undefined,
                 email: token.email,

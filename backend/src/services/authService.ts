@@ -8,21 +8,24 @@ export const createUser = async (userData: {
   password: string
   role?: any
   image?: string | null
+  isVerified?: boolean
 }) => {
-  const hashedPassword = await bcrypt.hash(userData.password, 12)
-
+  const hashedPassword = await bcrypt.hash(userData.password, 12);
   return prisma.user.create({
     data: {
       ...userData,
       password: hashedPassword,
       role: userData.role || 'STUDENT',
       image: userData.image || null,
+      isVerified: userData.isVerified || false
     },
     select: {
       id: true,
       name: true,
       email: true,
       role: true,
+      isVerified: true,
+      image: true,
       createdAt: true
     }
   })

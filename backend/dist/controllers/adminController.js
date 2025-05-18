@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.changeUserRole = exports.getUsers = void 0;
+exports.deleteUser = exports.changeUserRole = exports.getUsers = void 0;
 const prisma_1 = __importDefault(require("../utils/prisma"));
 // Get all users from the database
 const getUsers = async (req, res) => {
@@ -66,3 +66,29 @@ const changeUserRole = async (req, res) => {
     }
 };
 exports.changeUserRole = changeUserRole;
+const deleteUser = async (req, res) => {
+    try {
+        const admin = req.body.user; // Make sure this is added by secure auth middleware
+        const { id } = req.body;
+        // Only allow admins to delete users
+        if (admin.role !== "ADMIN") {
+            return res.status(401).json({ message: "Unauthorized" });
+        }
+        // Check if user exists
+        const user = await prisma_1.default.user.findUnique({
+            where: { id },
+        });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        // Delete user
+        await prisma_1.default.user.delete({
+            where: { id },
+        });
+        return res.status(200).json({ message: "User deleted successfully" });
+    }
+    catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+exports.deleteUser = deleteUser;

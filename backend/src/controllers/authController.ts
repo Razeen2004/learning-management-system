@@ -32,13 +32,15 @@ export const login = async (req: Request, res: Response) => {
 
         const user = await validateCredentials(email, password);
         if (!user) return res.status(401).json({ message: 'Invalid credentials' })
-        // const token = generateToken(user.id, user.role);
+        const token = generateToken(user.id, user.role);
         return res.json({
             id: user.id,
             name: user.name,
             email: user.email,
             isVerified: user.isVerified,
             role: user.role,
+            image: user.image,
+            token: token
         });
 
     } catch (error: any) {
@@ -51,29 +53,34 @@ export const loginWithGoogle = async (req: Request, res: Response) => {
         const { email, name, image } = req.body;
 
         // Check if user exists
-        let user = await prisma.user.findUnique({ where: { email } });
-
-        if(user?.image == null){
-            // Update the user with the image URL if it is null
-            const updatedImageUser = await prisma.user.update({
-                where: { email },
-                data: { image }
-            });
-        }
+        let user = await prisma.user.findUnique({ where: { email }, select: { id: true, name: true, email: true, isVerified: true, role: true, image: true } });
 
         if (!user) {
             // If user doesn't exist, create the user
-            const newUser = await createUser({ name, email, password: "", role: "STUDENT", image });
+            const newUser = await createUser({ name, email, password: "", isVerified: true, role: "STUDENT", image });
+            const token = generateToken(newUser.id, newUser.role);
+
             return res.status(201).json({
                 message: "User created successfully",
-                user: newUser, // Send the created user object back
+                user: { ...newUser, token },
             });
         }
+
+        if (user?.image == null) {
+            // Update the user with the image URL if it is null
+            const updatedImageUser = await prisma.user.update({
+                where: { email },
+                data: { image },
+                select: { id: true, name: true, email: true, isVerified: true, role: true, image: true }
+            });
+        }
+
+        const token = generateToken(user.id, user.role);
 
         // If user exists, return user object
         return res.status(200).json({
             message: "User already exists",
-            user, // Send the existing user object back
+            user: { ...user, token },
         });
 
     } catch (error: any) {

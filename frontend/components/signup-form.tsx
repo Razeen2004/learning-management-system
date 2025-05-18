@@ -22,10 +22,12 @@ export function Signup({
     const [email, setEmail] = React.useState("");
     const [name, setUsername] = React.useState("");
     const [password, setPassword] = React.useState("");
+    const [loading, setLoading] = React.useState(false);
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setLoading(true);
 
         const res = await fetch(`/api/auth/signup`, {
             method: "POST",
@@ -39,6 +41,7 @@ export function Signup({
         } else {
             toast.error(data?.error || "Registration failed");
         }
+        setLoading(false);
     };
 
 
@@ -87,8 +90,8 @@ export function Signup({
                                 </div>
                                 <Input id="password" type="password" placeholder="*****" required onChange={(e) => setPassword(e.target.value)} value={password} />
                             </div>
-                            <Button type="submit" className="w-full">
-                                Signup
+                            <Button type="submit" className="w-full" disabled={loading}>
+                                {loading ? "Creating account..." : "Signup"}
                             </Button>
                             <Button variant="outline" className="w-full">
                                 Login with Google

@@ -1,17 +1,22 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
+import { getServerSession } from 'next-auth';
 import { NextResponse, NextRequest } from 'next/server';
-
 
 // route.ts (API route in app/api/admin/getusers)
 
 export async function POST(req: NextRequest) {
     try {
         const { user } = await req.json();
+        // Get token from incoming request
+        const token = req.headers.get("authorization");
 
         const res = await fetch(`${process.env.BACKEND_URL}/api/admin/get/allusers`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: token || "",
+            },
             body: JSON.stringify({ user }),
         });
 

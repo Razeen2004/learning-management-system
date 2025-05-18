@@ -55,6 +55,8 @@ import {
 } from "@/components/ui/select";
 import axios from "axios";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { headers } from "next/headers";
 
 // Define User type
 export type User = {
@@ -69,18 +71,23 @@ type UserTableProps = {
     user: any;
     users: User[];
     loading: boolean;
+    refetch: () => void;
 };
 
-export function UserTable({ user, users, loading }: UserTableProps) {
+export function UserTable({ user, users, loading, refetch }: UserTableProps) {
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
     const [rowSelection, setRowSelection] = React.useState({});
     const [openEditDialog, setOpenEditDialog] = React.useState(false);
+    const [openDeleteDialog, setOpenDeleteDialog] = React.useState(false);
     const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
     const [selectedRole, setSelectedRole] = React.useState<any>(selectedUser?.role);
+    const [saveBtnLoading, setSaveBtnLoading] = React.useState(false);
+    const router = useRouter();
 
-    const  handleSaveRole = async () => {
+    const handleSaveRole = async () => {
+        setSaveBtnLoading(true);
         const res = await axios.post("/api/admin/users/changerole", {
             id: selectedUser?.id,
             role: selectedRole,
@@ -88,14 +95,46 @@ export function UserTable({ user, users, loading }: UserTableProps) {
                 id: user?.id, // Replace with actual current user ID
                 role: user?.role, // Replace with actual current user role
             },
+        }, {
+            headers: {
+                Authorization: `Bearer ${user?.accessToken}`
+            }
         })
-        if(res.status === 200) {
+        if (res.status === 200) {
             toast("User role updated successfully");
-        }else{
+            setOpenEditDialog(false);
+            refetch();
+        } else {
             toast.error("Failed to update user role");
         }
-        setOpenEditDialog(true);
+        setOpenEditDialog(false);
+        setSaveBtnLoading(false);
     };
+
+    const handleDeleteUser = async () => {
+        setSaveBtnLoading(true);
+        const res = await axios.post("/api/admin/users/deleteuser", {
+            id: selectedUser?.id,
+            user: {
+                id: user?.id, // Replace with actual current user ID
+                role: user?.role, // Replace with actual current user role
+            },
+        }, {
+            headers: {
+                Authorization: `Bearer ${user?.accessToken}`
+            }
+        })
+        if (res.status === 200) {
+            toast("User deleted successfully");
+            setOpenDeleteDialog(false);
+            refetch();
+        } else {
+            toast.error("Failed to delete user");
+        }
+        setOpenDeleteDialog(false);
+        setSaveBtnLoading(false);
+    }
+
 
     const columns: ColumnDef<User>[] = [
         {
@@ -191,7 +230,12 @@ export function UserTable({ user, users, loading }: UserTableProps) {
                             >
                                 Edit user
                             </DropdownMenuItem>
-                            <DropdownMenuItem>Delete user</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                                setSelectedUser(user);
+                                setSelectedRole(user.role);
+                                setOpenDeleteDialog(true);
+                            }}
+                            >Delete user</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 );
@@ -230,7 +274,7 @@ export function UserTable({ user, users, loading }: UserTableProps) {
                 <div className="rounded-md border">
                     <Table>
                         <TableHeader>
-                            <TableHeaderSkeleton /> {/* Skeleton for header */}
+                            <TableHeaderSkeleton />
                         </TableHeader>
                         <TableBody>
                             {Array(5) // Show 5 skeleton rows
@@ -266,7 +310,22 @@ export function UserTable({ user, users, loading }: UserTableProps) {
                         </Select>
                     </div>
                     <DialogFooter>
-                        <Button onClick={handleSaveRole}>Save</Button>
+                        <Button onClick={handleSaveRole} disabled={saveBtnLoading}>{saveBtnLoading ? "Updating" : "Save"}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Delete {selectedUser?.name}?</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <p>Are you sure you want to Delete the user {selectedUser?.name}?</p>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setOpenDeleteDialog(false)}>Back</Button>
+                        <Button variant="destructive" onClick={handleDeleteUser} disabled={saveBtnLoading}>{saveBtnLoading ? "Deleting" : "Delete"}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -308,22 +367,20 @@ export function UserTable({ user, users, loading }: UserTableProps) {
             {/* Table */}
             <div className="rounded-md border">
                 <Table>
-                    <TableHeader>
-                        {table.getHeaderGroups().map((group) => (
-                            <TableRow key={group.id}>
-                                {group.headers.map((header) => (
-                                    <TableHead key={header.id}>
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(
-                                                header.column.columnDef.header,
-                                                header.getContext()
-                                            )}
-                                    </TableHead>
-                                ))}
-                            </TableRow>
-                        ))}
-                    </TableHeader>
+                    <TableHeader>{table.getHeaderGroups().map((group) => (
+                        <TableRow key={group.id}>
+                            {group.headers.map((header) => (
+                                <TableHead key={header.id}>
+                                    {header.isPlaceholder
+                                        ? null
+                                        : flexRender(
+                                            header.column.columnDef.header,
+                                            header.getContext()
+                                        )}
+                                </TableHead>
+                            ))}
+                        </TableRow>
+                    ))}</TableHeader>
                     <TableBody>
                         {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (

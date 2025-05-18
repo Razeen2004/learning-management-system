@@ -15,12 +15,15 @@ const createUser = async (userData) => {
             password: hashedPassword,
             role: userData.role || 'STUDENT',
             image: userData.image || null,
+            isVerified: userData.isVerified || false
         },
         select: {
             id: true,
             name: true,
             email: true,
             role: true,
+            isVerified: true,
+            image: true,
             createdAt: true
         }
     });
